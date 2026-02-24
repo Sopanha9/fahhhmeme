@@ -19,12 +19,14 @@ export function activate(context: vscode.ExtensionContext) {
       command = "afplay";
       args = [soundPath];
     } else if (platform === "win32") {
-      // Windows
+      // Windows — SoundPlayer only supports .wav; use MediaPlayer for .mp3
+      const soundUri = "file:///" + soundPath.replace(/\\/g, "/");
       command = "powershell.exe";
       args = [
         "-NoProfile",
+        "-NonInteractive",
         "-Command",
-        `(New-Object Media.SoundPlayer "${soundPath}").PlaySync();`,
+        `Add-Type -AssemblyName presentationCore; $p = New-Object System.Windows.Media.MediaPlayer; $p.Open([uri]'${soundUri}'); $p.Play(); Start-Sleep -s 4; $p.Close()`,
       ];
     } else {
       // Linux
