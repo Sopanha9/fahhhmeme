@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { spawn } from "child_process";
 import * as path from "path";
+import * as os from "os";
 
 export function activate(context: vscode.ExtensionContext) {
   const playSound = () => {
@@ -9,7 +10,29 @@ export function activate(context: vscode.ExtensionContext) {
       "media",
       "fahh-sound.mp3",
     );
-    const player = spawn("afplay", [soundPath], { stdio: "ignore" });
+    const platform = os.platform();
+    let command: string;
+    let args: string[];
+
+    if (platform === "darwin") {
+      // macOS
+      command = "afplay";
+      args = [soundPath];
+    } else if (platform === "win32") {
+      // Windows
+      command = "powershell.exe";
+      args = [
+        "-NoProfile",
+        "-Command",
+        `(New-Object Media.SoundPlayer "${soundPath}").PlaySync();`,
+      ];
+    } else {
+      // Linux
+      command = "paplay";
+      args = [soundPath];
+    }
+
+    const player = spawn(command, args, { stdio: "ignore" });
     player.on("error", (error) => {
       console.error("Failed to play sound:", error.message);
     });
